@@ -3,5 +3,5 @@
 class Epoll {
 public:
 private:
-  // event fd -> event handlers
+  // TODO: Event Registration
 };
