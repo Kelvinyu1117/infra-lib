@@ -1,11 +1,15 @@
 #pragma once
 #include <array>
+#include <cctype>
 #include <cstddef>
 #include <memory>
+#include <stdexcept>
 #include <vector>
 namespace container {
 
-class Trie {
+enum class TrieType { LOWER_CASE, UPPER_CASE };
+
+template <TrieType T> class Trie {
   class TrieNode {
     std::array<std::unique_ptr<TrieNode>, 26> _slots;
     bool _isWord{false};
@@ -13,7 +17,38 @@ class Trie {
   };
 
 public:
-  Trie(std::vector<std::string> &words) {}
+  Trie(std::vector<std::string> &words) {
+    for (const auto &word : words) {
+      TrieNode *node = &root;
+      for (auto c : word) {
+        if (!isalpha(c))
+          throw std::invalid_argument(
+              "The Trie only accept alphabetical letter.");
+
+        int idx;
+        if constexpr (T == TrieType::LOWER_CASE) {
+          if (!islower(c))
+            throw std::invalid_argument("The LOWER_TYPE Trie only accept lower "
+                                        "case alphabetical letter.");
+
+          idx = static_cast<int>(c) - static_cast<int>('a');
+        } else {
+          if (!isupper(c))
+            throw std::invalid_argument("The UPPER_CASE Trie only accept lower "
+                                        "case alphabetical letter.");
+          idx = static_cast<int>(c) - static_cast<int>('A');
+        }
+
+        node->_hasChildren = true;
+        if (node->_slots[idx] == nullptr) {
+          node->slots[idx] = std::make_unique<TrieNode>();
+        }
+        node = *node->slots[idx];
+      }
+
+      node->_isWord = true;
+    }
+  }
 
   /**
    * @brief
