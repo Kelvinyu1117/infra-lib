@@ -10,8 +10,8 @@ namespace container {
 enum class TrieType { LOWER_CASE, UPPER_CASE };
 
 template <TrieType T> class Trie {
-  class TrieNode {
-    TrieNode *parent{nullptr};
+  struct TrieNode {
+    TrieNode *_parent{nullptr};
     std::array<std::unique_ptr<TrieNode>, 26> _slots{};
     bool _isWord{false};
     bool _hasChildren{false};
@@ -28,24 +28,21 @@ public:
 
   /**
    * @brief
-   *  Insert a string into the Trie, return true if the Trie does not contain
-   * the word the word
-   * @param s
-   * @return true
-   * @return false
+   * Insert a string into the Trie
+   * @param word
    */
-  bool insert(const std::string &word) {
-    TrieNode *node = &root;
+  void insert(const std::string &word) {
+    TrieNode *node = &_root;
     for (auto c : word) {
       auto idx = getIndex(c);
 
       node->_hasChildren = true;
       if (!node->_slots[idx]) {
-        node->slots[idx] = std::make_unique<TrieNode>();
+        node->_slots[idx] = std::make_unique<TrieNode>();
       }
 
-      node->slots[idx]->parent = node;
-      node = *node->slots[idx];
+      node->_slots[idx]->_parent = node;
+      node = node->_slots[idx].get();
     }
 
     node->_isWord = true;
@@ -59,16 +56,16 @@ public:
    * @return false
    */
   bool search(const std::string &s) {
-    TrieNode *node = &root;
+    TrieNode *node = &_root;
 
     for (auto c : s) {
       auto idx = getIndex(c);
-      auto next = node->_slots[idx];
+      auto next = node->_slots[idx].get();
 
       if (!next)
         return false;
 
-      node = next.get();
+      node = next;
     }
 
     return true;
@@ -104,6 +101,6 @@ private:
   }
 
 private:
-  TrieNode root;
+  TrieNode _root;
 };
 } // namespace container
