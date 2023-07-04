@@ -1,18 +1,19 @@
 #pragma once
 #include <array>
+#include <cassert>
 #include <cctype>
 #include <cstddef>
 #include <memory>
 #include <stdexcept>
+#include <unordered_map>
 #include <vector>
 namespace container {
 
-enum class TrieType { LOWER_CASE, UPPER_CASE };
-
-template <TrieType T> class Trie {
+class Trie {
   struct TrieNode {
     TrieNode *_parent{nullptr};
-    std::array<std::unique_ptr<TrieNode>, 26> _slots{};
+    char key{};
+    std::unordered_map<char, std::unique_ptr<TrieNode>> _slots{};
     bool _isWord{false};
     bool _hasChildren{false};
   };
@@ -34,15 +35,14 @@ public:
   void insert(const std::string &word) {
     TrieNode *node = &_root;
     for (auto c : word) {
-      auto idx = getIndex(c);
 
       node->_hasChildren = true;
-      if (!node->_slots[idx]) {
-        node->_slots[idx] = std::make_unique<TrieNode>();
+      if (node->_slots.find(c) == node->_slots.end()) {
+        node->_slots[c] = std::make_unique<TrieNode>();
       }
 
-      node->_slots[idx]->_parent = node;
-      node = node->_slots[idx].get();
+      node->_slots[c]->_parent = node;
+      node = node->_slots[c].get();
     }
 
     node->_isWord = true;
@@ -56,19 +56,8 @@ public:
    * @return false
    */
   bool search(const std::string &s) {
-    TrieNode *node = &_root;
-
-    for (auto c : s) {
-      auto idx = getIndex(c);
-      auto next = node->_slots[idx].get();
-
-      if (!next)
-        return false;
-
-      node = next;
-    }
-
-    return true;
+    auto cursor = search_impl(s);
+    return cursor != nullptr;
   }
 
   /**
@@ -78,26 +67,49 @@ public:
    * @return true
    * @return false
    */
-  bool remove(const std::string &s) {}
+  bool remove(const std::string &s) {
+    auto cursor = search_impl(s);
+    if (!cursor)
+      return false;
+
+    if (cursor->_hasChildren)
+      cursor->_isWord = false;
+    else {
+      char key = cursor->key;
+      cursor = cursor->_parent;
+
+      while (cursor) {
+        auto it = cursor->_slots.find(key);
+        assert(it != cursor->_slots.end());
+
+        it->second.reset();
+
+        key = cursor->key;
+        cursor = cursor->_parent;
+      }
+    }
+
+    return true;
+  }
 
 private:
-  size_t getIndex(char c) {
-    if (!isalpha(c))
-      throw std::invalid_argument("The Trie only accept alphabetical letter.");
+  TrieNode *search_impl(const std::string &s) {
+    TrieNode *node = &_root;
 
-    int idx;
-    if constexpr (T == TrieType::LOWER_CASE) {
-      if (!islower(c))
-        throw std::invalid_argument("The LOWER_TYPE Trie only accept lower "
-                                    "case alphabetical letter.");
+    for (auto c : s) {
 
-      return static_cast<int>(c) - static_cast<int>('a');
-    } else {
-      if (!isupper(c))
-        throw std::invalid_argument("The UPPER_CASE Trie only accept lower "
-                                    "case alphabetical letter.");
-      return static_cast<int>(c) - static_cast<int>('A');
+      auto it = node->_slots.find(c);
+
+      if (it == node->_slots.end())
+        return nullptr;
+
+      node = it->second.get();
     }
+
+    if (!node->_isWord)
+      return nullptr;
+    else
+      return node;
   }
 
 private:

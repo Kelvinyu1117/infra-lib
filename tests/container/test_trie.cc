@@ -3,7 +3,7 @@
 
 TEST(Trie, DefaultConstruction) {
   using namespace container;
-  Trie<TrieType::LOWER_CASE> t{};
+  Trie t{};
 
   EXPECT_EQ(t.search("hello"), false);
 
