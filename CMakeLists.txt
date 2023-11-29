@@ -7,6 +7,10 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 set(CMAKE_INSTALL_PREFIX ${PROJECT_SOURCE_DIR})
 
+
+add_library(${PROJECT_NAME} INTERFACE)
+target_include_directories(${PROJECT_NAME} INTERFACE include)
+
 # GTest
 include(FetchContent)
 FetchContent_Declare(
@@ -17,7 +21,4 @@ FetchContent_Declare(
 set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(googletest)
 
-
 # subdirectory
-add_subdirectory(src)
-add_subdirectory(tests)
