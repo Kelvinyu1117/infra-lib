@@ -1,4 +1,5 @@
 #pragma once
 
-template<typename T>
-class TCPClient {};
+namespace sys::network {
+template <typename T> class TCPClient {};
+} // namespace sys::network
